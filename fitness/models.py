@@ -31,19 +31,24 @@ class UserProfile(models.Model):
         return f"بروفايل عمره {self.age}"
 
 class Exercise(models.Model):
-    LOCATION_CHOICES = [('HOME', 'البيت'), ('GYM', 'الجيم')]
-    LEVEL_CHOICES = [('Beginner', 'مبتدئ'), ('Intermediate', 'متوسط'), ('Advanced', 'متقدم')]
+    # الخيارات الجديدة للتقسيم
+    CATEGORY_CHOICES = [
+        ('PUSH', 'Push (صدر، كتف، تراي)'),
+        ('PULL', 'Pull (ظهر، باي، ساعد)'),
+        ('LEGS', 'Legs (أرجل)'),
+        ('CORE', 'Core (بطن وجذع)'),
+    ]
 
-    name = models.CharField(max_length=100, verbose_name="اسم التمرين")
-    # الحقل الجديد للصور
-    image_url = models.URLField(max_length=500, blank=True, null=True, verbose_name="رابط صورة التمرين")
-    location = models.CharField(max_length=10, choices=LOCATION_CHOICES)
-    level = models.CharField(max_length=20, choices=LEVEL_CHOICES)
-    sets = models.IntegerField(verbose_name="المجموعات المستهدفة")
-    reps = models.IntegerField(verbose_name="العدات المستهدفة")
+    name = models.CharField(max_length=100)
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, default='PUSH') # الحقل الجديد
+    image_url = models.URLField(max_length=500, blank=True, null=True)
+    location = models.CharField(max_length=10, choices=[('HOME', 'البيت'), ('GYM', 'الجيم')])
+    level = models.CharField(max_length=20, choices=[('Beginner', 'مبتدئ'), ('Intermediate', 'متوسط'), ('Advanced', 'متقدم')])
+    sets = models.IntegerField()
+    reps = models.IntegerField()
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.category})"
 
 class WorkoutLog(models.Model):
     profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE)

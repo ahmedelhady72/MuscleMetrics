@@ -2,64 +2,172 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>تحليل مستواك</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحليلات الأداء الاحترافية</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #0a0a0a; color: #fff; }
-        .chart-box {
-            background: #161616; padding: 40px; border-radius: 25px;
-            border: 1px solid #333; margin-top: 40px;
+        body {
+            background-color: #080808;
+            color: #e0e0e0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            padding-bottom: 50px;
+        }
+        .dashboard-header {
+            background: linear-gradient(45deg, #111, #1a1a1a);
+            padding: 40px 0;
+            border-bottom: 2px solid #00ff88;
+            margin-bottom: 40px;
+        }
+        .chart-card {
+            background: #121212;
+            border: 1px solid #222;
+            border-radius: 20px;
+            padding: 25px;
+            transition: 0.3s;
+            height: 100%;
+        }
+        .chart-card:hover {
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+        .stat-badge {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            border: 1px solid #00ff88;
+        }
+        select.form-select {
+            background-color: #1a1a1a;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+        .sidebar-stats {
+            background: #161616;
+            border-radius: 20px;
+            padding: 20px;
         }
     </style>
 </head>
 <body>
 
-<div class="container py-5 text-center">
-    <h2 class="display-5 fw-bold text-success mb-4">تحليل الأداء البدني</h2>
-    <p class="text-secondary mb-5">تطور حجم التدريب (Volume) عبر الأيام</p>
+<div class="dashboard-header text-center">
+    <h1 class="display-5 fw-bold text-uppercase">لوحة تحليلات القوة 📊</h1>
+    <p class="text-secondary">راقب تطور حركات الكاليستنكس والتمارين بدقة</p>
+</div>
 
-    <div class="chart-box">
-        <canvas id="progressChart"></canvas>
+<div class="container">
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-6 text-center">
+            <label class="mb-3 d-block text-secondary">اختر التمرين الذي تريد تحليل تقدمه:</label>
+            <select id="exerciseSelector" class="form-select form-select-lg" onchange="updateDashboard()">
+                {% for name in exercise_names %}
+                <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
 
-    <div class="mt-5">
-        <a href="{% url 'workout_plan' %}" class="btn btn-dark border-secondary px-5 py-2">← العودة للجدول</a>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="m-0 text-success">إجمالي حجم التمرين (Volume)</h4>
+                    <span class="stat-badge">الأداء الزمني</span>
+                </div>
+                <canvas id="volumeChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="row g-4">
+                <div class="col-12 text-center">
+                    <div class="chart-card">
+                        <h5 class="text-info mb-3">تطور العدات (Reps)</h5>
+                        <canvas id="repsChart" height="150"></canvas>
+                    </div>
+                </div>
+                <div class="col-12 text-center">
+                    <div class="chart-card">
+                        <h5 class="text-warning mb-3">تطور المجموعات (Sets)</h5>
+                        <canvas id="setsChart" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="{% url 'workout_plan' %}" class="btn btn-outline-secondary px-5 py-2">← العودة للتمارين</a>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctx = document.getElementById('progressChart').getContext('2d');
-    
-    // سحب البيانات التي أرسلتها الـ views بصيغة JSON
-    const dates = {{ dates_json|safe }};
-    const performance = {{ performance_json|safe }};
+    // استلام البيانات من Django بصيغة JSON
+    const allData = JSON.parse('{{ exercise_data_json|safe }}');
+    let volumeChart, repsChart, setsChart;
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: dates,
-            datasets: [{
-                label: 'إجمالي الحجم (مجموعات × عدات)',
-                data: performance,
-                borderColor: '#00ff88',
-                backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                borderWidth: 5,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 8,
-                pointBackgroundColor: '#fff'
-            }]
-        },
-        options: {
+    // دالة لإنشاء الرسم البياني
+    function initCharts() {
+        const commonOptions = {
             responsive: true,
             scales: {
-                y: { grid: { color: '#222' }, ticks: { color: '#aaa' }, beginAtZero: true },
-                x: { grid: { color: '#222' }, ticks: { color: '#aaa' } }
+                y: { grid: { color: '#222' }, ticks: { color: '#888' } },
+                x: { grid: { color: '#222' }, ticks: { color: '#888' } }
             },
-            plugins: { legend: { labels: { color: '#fff', font: { size: 14 } } } }
+            plugins: { legend: { display: false } }
+        };
+
+        volumeChart = new Chart(document.getElementById('volumeChart'), {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Volume', borderColor: '#00ff88', backgroundColor: 'rgba(0, 255, 136, 0.1)', fill: true, tension: 0.4, data: [] }] },
+            options: commonOptions
+        });
+
+        repsChart = new Chart(document.getElementById('repsChart'), {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'Reps', backgroundColor: '#00d9ff', data: [] }] },
+            options: commonOptions
+        });
+
+        setsChart = new Chart(document.getElementById('setsChart'), {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Sets', borderColor: '#ffcc00', data: [], tension: 0.4 }] },
+            options: commonOptions
+        });
+    }
+
+    // دالة تحديث البيانات بناءً على المختار من Dropdown
+    function updateDashboard() {
+        const selectedEx = document.getElementById('exerciseSelector').value;
+        const data = allData[selectedEx];
+
+        if (data) {
+            // تحديث الرسم البياني الأساسي
+            volumeChart.data.labels = data.dates;
+            volumeChart.data.datasets[0].data = data.volume;
+            volumeChart.update();
+
+            // تحديث رسم العدات
+            repsChart.data.labels = data.dates;
+            repsChart.data.datasets[0].data = data.reps;
+            repsChart.update();
+
+            // تحديث رسم المجموعات
+            setsChart.data.labels = data.dates;
+            setsChart.data.datasets[0].data = data.sets;
+            setsChart.update();
         }
-    });
+    }
+
+    // التشغيل المبدئي
+    initCharts();
+    updateDashboard();
 </script>
+
 </body>
 </html>

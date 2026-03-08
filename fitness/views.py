@@ -48,19 +48,23 @@ def choose_workout(request):
 
 def workout_plan(request):
     profile_id = request.session.get('profile_id')
-    if not profile_id:
-        return redirect('input_data')
-        
     profile = get_object_or_404(UserProfile, id=profile_id)
-    exercises = Exercise.objects.filter(
+    
+    all_exercises = Exercise.objects.filter(
         location=profile.workout_location, 
         level=profile.fitness_level
     )
-    
-    return render(request, 'fitness/workout_plan.html', {
-        'exercises': exercises, 
+
+    # تقسيم التمارين برمجياً
+    context = {
+        'push_exercises': all_exercises.filter(category='PUSH'),
+        'pull_exercises': all_exercises.filter(category='PULL'),
+        'leg_exercises': all_exercises.filter(category='LEGS'),
+        'core_exercises': all_exercises.filter(category='CORE'),
         'profile': profile
-    })
+    }
+    
+    return render(request, 'fitness/workout_plan.html', context)
 
 def log_workout(request, exercise_id):
     if request.method == 'POST':
@@ -89,21 +93,26 @@ def log_workout(request, exercise_id):
 
 def progress_analysis(request):
     profile_id = request.session.get('profile_id')
-    if not profile_id:
-        return redirect('input_data')
-        
     profile = get_object_or_404(UserProfile, id=profile_id)
-    # ترتيب السجلات بالتاريخ لعرض التطور الزمني
-    logs = WorkoutLog.objects.filter(profile=profile).order_by('date')
     
-    dates = [log.date.strftime("%Y-%m-%d") for log in logs]
-    # الحساب الرياضي: Volume = Sets * Reps
-    performance = [log.actual_sets * log.actual_reps for log in logs]
+    # نجيب كل التمارين اللي اليوزر سجلها فعلاً
+    user_logs = WorkoutLog.objects.filter(profile=profile)
+    distinct_exercises = user_logs.values_list('exercise__name', flat=True).distinct()
+    
+    # نجهز بيانات مفصلة لكل تمرين
+    exercise_data = {}
+    for ex_name in distinct_exercises:
+        logs = user_logs.filter(exercise__name=ex_name).order_by('date')
+        exercise_data[ex_name] = {
+            'dates': [log.date.strftime("%Y-%m-%d") for log in logs],
+            'volume': [log.actual_sets * log.actual_reps for log in logs],
+            'reps': [log.actual_reps for log in logs],
+            'sets': [log.actual_sets for log in logs]
+        }
     
     context = {
-        'dates_json': json.dumps(dates),
-        'performance_json': json.dumps(performance),
+        'exercise_data_json': json.dumps(exercise_data),
+        'exercise_names': distinct_exercises,
         'profile': profile
     }
-    
     return render(request, 'fitness/progress.html', context)
