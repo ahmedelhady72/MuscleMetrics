@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تحليل مستواك</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0a0a0a; color: #fff; }
+        .chart-box {
+            background: #161616; padding: 40px; border-radius: 25px;
+            border: 1px solid #333; margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-5 text-center">
+    <h2 class="display-5 fw-bold text-success mb-4">تحليل الأداء البدني</h2>
+    <p class="text-secondary mb-5">تطور حجم التدريب (Volume) عبر الأيام</p>
+
+    <div class="chart-box">
+        <canvas id="progressChart"></canvas>
+    </div>
+
+    <div class="mt-5">
+        <a href="{% url 'workout_plan' %}" class="btn btn-dark border-secondary px-5 py-2">← العودة للجدول</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    
+    // سحب البيانات التي أرسلتها الـ views بصيغة JSON
+    const dates = {{ dates_json|safe }};
+    const performance = {{ performance_json|safe }};
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'إجمالي الحجم (مجموعات × عدات)',
+                data: performance,
+                borderColor: '#00ff88',
+                backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                borderWidth: 5,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 8,
+                pointBackgroundColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { grid: { color: '#222' }, ticks: { color: '#aaa' }, beginAtZero: true },
+                x: { grid: { color: '#222' }, ticks: { color: '#aaa' } }
+            },
+            plugins: { legend: { labels: { color: '#fff', font: { size: 14 } } } }
+        }
+    });
+</script>
+</body>
+</html>

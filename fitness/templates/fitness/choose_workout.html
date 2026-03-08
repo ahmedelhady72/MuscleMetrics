@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختر نوع التحدي</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .selection-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 25px;
+            overflow: hidden;
+            transition: 0.4s;
+            cursor: pointer;
+            position: relative;
+        }
+        .selection-card:hover {
+            border-color: #00ff88;
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+        .card-img-overlay {
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+        }
+        .card-img {
+            height: 400px;
+            object-fit: cover;
+            opacity: 0.5;
+            transition: 0.4s;
+        }
+        .selection-card:hover .card-img {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+        input[type="radio"] {
+            display: none;
+        }
+        input[type="radio"]:checked + .selection-card {
+            border-color: #00ff88;
+            background: #00ff881a;
+        }
+        .btn-next {
+            background: #00ff88;
+            color: #000;
+            font-weight: bold;
+            padding: 15px 50px;
+            border-radius: 15px;
+            border: none;
+            transition: 0.3s;
+        }
+        .btn-next:hover {
+            background: #00cc6e;
+            transform: scale(1.05);
+        }
+        .form-select {
+            background-color: #1a1a1a;
+            color: white;
+            border: 1px solid #333;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="fw-bold display-5 text-uppercase" style="letter-spacing: 2px;">جاهز تكسر حدودك؟ 🔥</h1>
+        <p class="text-secondary">اختار المكان اللي هتبدأ فيه تمرينك النهاردة</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-4 justify-content-center">
+            
+            <div class="col-md-5 col-lg-5">
+                <label class="w-100">
+                    <input type="radio" name="location" value="HOME" required>
+                    <div class="card selection-card">
+                        <img src="https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?q=80&w=1374&auto=format&fit=crop" class="card-img" alt="Calisthenics">
+                        <div class="card-img-overlay text-center">
+                            <h2 class="fw-bold text-success">كاليستنكس (HOME)</h2>
+                            <p class="small">بناء عضلات جبارة بوزن جسمك فقط</p>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <div class="col-md-5 col-lg-5">
+                <label class="w-100">
+                    <input type="radio" name="location" value="GYM" required>
+                    <div class="card selection-card">
+                        <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop" class="card-img" alt="Gym">
+                        <div class="card-img-overlay text-center">
+                            <h2 class="fw-bold text-success">الجيم (GYM)</h2>
+                            <p class="small">استخدام الأوزان والمعدات للضخامة القصوى</p>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+        </div>
+
+        <div class="row mt-5 justify-content-center">
+            <div class="col-md-6 text-center">
+                <h4 class="mb-3">حدد مستواك الحالي:</h4>
+                <select name="level" class="form-select form-select-lg mb-4">
+                    <option value="Beginner">مبتدئ (مستوى الصفر)</option>
+                    <option value="Intermediate" selected>متوسط (فاهم الأساسيات)</option>
+                    <option value="Advanced">متقدم (بطل كاليستنكس)</option>
+                </select>
+                
+                <button type="submit" class="btn btn-next w-100 text-uppercase">توليد الجدول المخصص 🚀</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>
